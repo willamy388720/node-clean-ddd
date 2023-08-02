@@ -1,6 +1,6 @@
 import { UniqueEntityId } from "@/core/entities/unique-entity-id";
-import { Answer } from "../entities/answer";
-import { AnswerRepository } from "../repositories/answers-repository";
+import { AnswersRepository } from "../repositories/answers-repository";
+import { Answer } from "../../enterprise/entities/answer";
 
 interface AnswerQuestionServiceRequest {
   instructorId: string;
@@ -8,22 +8,26 @@ interface AnswerQuestionServiceRequest {
   content: string;
 }
 
+interface AnswerQuestionServiceResponse {
+  answer: Answer;
+}
+
 export class AnswerQuestionService {
-  constructor(private answerRepository: AnswerRepository) {}
+  constructor(private answersRepository: AnswersRepository) {}
 
   async execute({
     instructorId,
     questionId,
     content,
-  }: AnswerQuestionServiceRequest) {
+  }: AnswerQuestionServiceRequest): Promise<AnswerQuestionServiceResponse> {
     const answer = Answer.create({
       content,
       authorId: new UniqueEntityId(instructorId),
       questionId: new UniqueEntityId(questionId),
     });
 
-    await this.answerRepository.create(answer);
+    await this.answersRepository.create(answer);
 
-    return answer;
+    return { answer };
   }
 }
