@@ -1,11 +1,17 @@
 import { AnswersRepository } from "../repositories/answers-repository";
+import { NotAllowedError } from "./errors/not-allowed-error";
+import { ResourceNotFoundError } from "./errors/resource-not-found-error";
+import { Either, left, right } from "@/core/either";
 
 interface DeleteAnswerServiceRequest {
   authorId: string;
   answerId: string;
 }
 
-interface DeleteAnswerServiceResponse {}
+type DeleteAnswerServiceResponse = Either<
+  ResourceNotFoundError | NotAllowedError,
+  {}
+>;
 
 export class DeleteAnswerService {
   constructor(private answersRepository: AnswersRepository) {}
@@ -17,15 +23,15 @@ export class DeleteAnswerService {
     const answer = await this.answersRepository.findById(answerId);
 
     if (!answer) {
-      throw new Error("Question not find");
+      return left(new ResourceNotFoundError());
     }
 
     if (authorId !== answer.authorId.toString()) {
-      throw new Error("Invalid author");
+      return left(new NotAllowedError());
     }
 
     await this.answersRepository.delete(answer);
 
-    return {};
+    return right({});
   }
 }

@@ -1,11 +1,17 @@
+import { Either, left, right } from "@/core/either";
 import { QuestionCommentsRepository } from "../repositories/question-comments-repository";
+import { ResourceNotFoundError } from "./errors/resource-not-found-error";
+import { NotAllowedError } from "./errors/not-allowed-error";
 
 interface DeleteQuestionCommentServiceRequest {
   authorId: string;
   questionCommentId: string;
 }
 
-interface DeleteQuestionCommentServiceResponse {}
+type DeleteQuestionCommentServiceResponse = Either<
+  ResourceNotFoundError | NotAllowedError,
+  {}
+>;
 
 export class DeleteQuestionCommentService {
   constructor(private questionCommentsRepository: QuestionCommentsRepository) {}
@@ -19,15 +25,15 @@ export class DeleteQuestionCommentService {
     );
 
     if (!questionComment) {
-      throw new Error("Question not found");
+      return left(new ResourceNotFoundError());
     }
 
     if (authorId !== questionComment.authorId.toString()) {
-      throw new Error("Invalid author");
+      return left(new NotAllowedError());
     }
 
     await this.questionCommentsRepository.delete(questionComment);
 
-    return {};
+    return right({});
   }
 }

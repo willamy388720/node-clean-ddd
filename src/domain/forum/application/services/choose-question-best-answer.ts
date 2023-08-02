@@ -1,19 +1,27 @@
-
+import { Either, left, right } from "@/core/either";
 import { Question } from "../../enterprise/entities/question";
 import { AnswersRepository } from "../repositories/answers-repository";
 import { QuestionsRepository } from "../repositories/questions-repository";
+import { ResourceNotFoundError } from "./errors/resource-not-found-error";
+import { NotAllowedError } from "./errors/not-allowed-error";
 
 interface ChooseQuestionBestAnswerServiceRequest {
   answerId: string;
   authorId: string;
 }
 
-interface ChooseQuestionBestAnswerServiceResponse {
-    question: Question
-}
+type ChooseQuestionBestAnswerServiceResponse = Either<
+  ResourceNotFoundError | NotAllowedError,
+  {
+    question: Question;
+  }
+>;
 
 export class ChooseQuestionBestAnswerService {
-  constructor(private answersRepository: AnswersRepository, private questionsRepository: QuestionsRepository) {}
+  constructor(
+    private answersRepository: AnswersRepository,
+    private questionsRepository: QuestionsRepository
+  ) {}
 
   async execute({
     answerId,
@@ -22,26 +30,27 @@ export class ChooseQuestionBestAnswerService {
     const answer = await this.answersRepository.findById(answerId);
 
     if (!answer) {
-      throw new Error("Answers not found");
+      return left(new ResourceNotFoundError());
     }
 
-    const question = await this.questionsRepository.findById(answer.questionId.toValue());
-
+    const question = await this.questionsRepository.findById(
+      answer.questionId.toValue()
+    );
 
     if (!question) {
-        throw new Error("Question not found");
-      }
-
-    if (authorId !== question.authorId.toString()) {
-      throw new Error("Invalid author");
+      return left(new ResourceNotFoundError());
     }
 
-    question.bestAnswerId = answer.id
+    if (authorId !== question.authorId.toString()) {
+      return left(new NotAllowedError());
+    }
 
-    await this.questionsRepository.save(question)
+    question.bestAnswerId = answer.id;
 
-    return { 
-        question
-    };
+    await this.questionsRepository.save(question);
+
+    return right({
+      question,
+    });
   }
 }
