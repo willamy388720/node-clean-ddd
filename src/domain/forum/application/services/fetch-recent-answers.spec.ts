@@ -2,24 +2,30 @@ import { InMemoryAnswersRepository } from "test/repositories/in-memory-answers-r
 import { makeAnswer } from "test/factories/make-answer";
 import { FetchRecentAnswersService } from "./fetch-recent-answers";
 import { UniqueEntityId } from "@/core/entities/unique-entity-id";
+import { InMemoryAnswerAttachmentsRepository } from "test/repositories/in-memory-answer-attachments-repository";
 
-let inMemoryAnswerRepository: InMemoryAnswersRepository;
+let inMemoryAnswersRepository: InMemoryAnswersRepository;
+let inMemoryAnswerAttachmentsRepository: InMemoryAnswerAttachmentsRepository;
 let sut: FetchRecentAnswersService;
 
 describe("Fetch Recent Answers", () => {
   beforeEach(() => {
-    inMemoryAnswerRepository = new InMemoryAnswersRepository();
-    sut = new FetchRecentAnswersService(inMemoryAnswerRepository);
+    inMemoryAnswerAttachmentsRepository =
+      new InMemoryAnswerAttachmentsRepository();
+    inMemoryAnswersRepository = new InMemoryAnswersRepository(
+      inMemoryAnswerAttachmentsRepository
+    );
+    sut = new FetchRecentAnswersService(inMemoryAnswersRepository);
   });
 
   it("should be able to fetch question answers", async () => {
-    await inMemoryAnswerRepository.create(
+    await inMemoryAnswersRepository.create(
       makeAnswer({ questionId: new UniqueEntityId("question-1") })
     );
-    await inMemoryAnswerRepository.create(
+    await inMemoryAnswersRepository.create(
       makeAnswer({ questionId: new UniqueEntityId("question-1") })
     );
-    await inMemoryAnswerRepository.create(
+    await inMemoryAnswersRepository.create(
       makeAnswer({ questionId: new UniqueEntityId("question-1") })
     );
 
@@ -33,7 +39,7 @@ describe("Fetch Recent Answers", () => {
 
   it("should be able to fetch paginated question answers", async () => {
     for (let i = 1; i <= 22; i++) {
-      await inMemoryAnswerRepository.create(
+      await inMemoryAnswersRepository.create(
         makeAnswer({ questionId: new UniqueEntityId("question-1") })
       );
     }

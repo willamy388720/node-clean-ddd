@@ -5,17 +5,30 @@ import { InMemoryAnswersRepository } from "test/repositories/in-memory-answers-r
 import { ChooseQuestionBestAnswerService } from "./choose-question-best-answer";
 import { makeAnswer } from "test/factories/make-answer";
 import { NotAllowedError } from "./errors/not-allowed-error";
+import { InMemoryQuestionAttachmentsRepository } from "test/repositories/in-memory-question-attachments-repository";
+import { InMemoryAnswerAttachmentsRepository } from "test/repositories/in-memory-answer-attachments-repository";
 
 let inMemoryQuestionRepository: InMemoryQuestionsRepository;
-let inMemoryAnswerRepository: InMemoryAnswersRepository;
+let inMemoryQuestionAttachmentsRepository: InMemoryQuestionAttachmentsRepository;
+let inMemoryAnswersRepository: InMemoryAnswersRepository;
+let inMemoryAnswerAttachmentsRepository: InMemoryAnswerAttachmentsRepository;
+
 let sut: ChooseQuestionBestAnswerService;
 
 describe("Choose Question Best Answer", () => {
   beforeEach(() => {
-    inMemoryQuestionRepository = new InMemoryQuestionsRepository();
-    inMemoryAnswerRepository = new InMemoryAnswersRepository();
+    inMemoryQuestionAttachmentsRepository =
+      new InMemoryQuestionAttachmentsRepository();
+    inMemoryQuestionRepository = new InMemoryQuestionsRepository(
+      inMemoryQuestionAttachmentsRepository
+    );
+    inMemoryAnswerAttachmentsRepository =
+      new InMemoryAnswerAttachmentsRepository();
+    inMemoryAnswersRepository = new InMemoryAnswersRepository(
+      inMemoryAnswerAttachmentsRepository
+    );
     sut = new ChooseQuestionBestAnswerService(
-      inMemoryAnswerRepository,
+      inMemoryAnswersRepository,
       inMemoryQuestionRepository
     );
   });
@@ -25,7 +38,7 @@ describe("Choose Question Best Answer", () => {
     const answer = makeAnswer({ questionId: question.id });
 
     await inMemoryQuestionRepository.create(question);
-    await inMemoryAnswerRepository.create(answer);
+    await inMemoryAnswersRepository.create(answer);
 
     await sut.execute({
       authorId: question.authorId.toString(),
@@ -42,7 +55,7 @@ describe("Choose Question Best Answer", () => {
     const answer = makeAnswer({ questionId: question.id });
 
     await inMemoryQuestionRepository.create(question);
-    await inMemoryAnswerRepository.create(answer);
+    await inMemoryAnswersRepository.create(answer);
 
     const result = await sut.execute({
       answerId: answer.id.toString(),
